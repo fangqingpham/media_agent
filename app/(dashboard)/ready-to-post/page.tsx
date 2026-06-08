@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { api } from "@/lib/api";
 import { CONTENT_TYPE_LABELS, isVideoType, type ContentType } from "@/lib/contentTypes";
 import { RiskBadge, StatusBadge, CopyButton } from "@/components/badges";
+import MediaAttach from "@/components/MediaAttach";
 
 type Post = Record<string, unknown>;
 
@@ -154,6 +155,8 @@ export default function ReadyToPostPage() {
                   </button>
                 )}
               </div>
+
+              <MediaAttach postId={id} brandId={brandId ?? undefined} />
 
               {st === "approved" && (
                 <button onClick={() => toReady(id)} disabled={busyId === id}>Move to ready-to-post</button>

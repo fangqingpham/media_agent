@@ -2,6 +2,7 @@ import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { decryptToken } from "@/lib/tokenCrypto";
 import { publishToPage } from "@/lib/facebook";
+import { hasApprovedCompliance } from "@/services/complianceService";
 
 export class PublishError extends Error {
   status: number;
@@ -106,8 +107,15 @@ export async function publishPostToFacebook(
   if (post.human_approval_required && !["approved", "ready_to_post", "scheduled_manually"].includes(post.status)) {
     throw new PublishError("This post requires human approval before publishing.", 422);
   }
-  if (post.compliance_risk === "high" && !opts.allowHighRisk) {
-    throw new PublishError("High-risk post — explicit approval is required to publish.", 422);
+  if (post.compliance_risk === "high") {
+    // Stage 11 gate: a high-risk post must have an explicit approved compliance decision.
+    const passed = await hasApprovedCompliance(postId);
+    if (!passed) {
+      throw new PublishError(
+        "High-risk post must pass Compliance Review and be approved (on /compliance-review) before publishing.",
+        422
+      );
+    }
   }
   const caption = (post.platform_caption as string) || (post.caption as string) || "";
   if (!caption.trim()) {

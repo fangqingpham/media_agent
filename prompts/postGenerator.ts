@@ -44,7 +44,13 @@ Respond with ONE JSON object, no markdown, EXACTLY this shape:
   "compliance_risk": "low" | "medium" | "high",
   "compliance_reason": string,
   "human_approval_required": boolean,
-  "claims_to_check": string[]            // any factual/financial/legal claims a human should verify
+  "claims_to_check": string[],           // any factual/financial/legal claims a human should verify
+  "media_suggestion": {                   // what visual to pair with this post
+    "needed_type": string,               // e.g. "short vertical video", "single image", "carousel"
+    "could_use_existing": string,        // what kind of existing library asset could fit, if any
+    "suggested_thumbnail_text": string,  // short text for a thumbnail; "" if N/A
+    "suggested_overlay_text": string     // short on-image/on-video overlay text; "" if N/A
+  }
 }
 
 Rules for the optional fields:

@@ -91,3 +91,36 @@ export async function publishToPage(
   }
   return { id: json.id };
 }
+
+// ---- Stage 12: reading Page posts + comments (needs pages_read_engagement) ----
+
+export type FbPagePost = { id: string; message?: string; permalink_url?: string; created_time?: string };
+export type FbComment = {
+  id: string;
+  message?: string;
+  created_time?: string;
+  permalink_url?: string;
+  from?: { id?: string; name?: string };
+};
+
+// Recent posts on a Page.
+export async function listPagePosts(pageId: string, pageToken: string, limit = 25): Promise<FbPagePost[]> {
+  const json = await fbGet(`/${pageId}/posts`, {
+    access_token: pageToken,
+    fields: "id,message,permalink_url,created_time",
+    limit: String(limit),
+  });
+  return (json.data as FbPagePost[]) ?? [];
+}
+
+// Comments on a single post (newest first). `from` may be absent depending on the
+// commenter's privacy / the app's permission level — callers must handle that.
+export async function listPostComments(postId: string, pageToken: string, limit = 50): Promise<FbComment[]> {
+  const json = await fbGet(`/${postId}/comments`, {
+    access_token: pageToken,
+    fields: "id,message,created_time,permalink_url,from",
+    order: "reverse_chronological",
+    limit: String(limit),
+  });
+  return (json.data as FbComment[]) ?? [];
+}

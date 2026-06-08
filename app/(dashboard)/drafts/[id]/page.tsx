@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { api } from "@/lib/api";
+import MediaAttach from "@/components/MediaAttach";
 import {
   POST_STATUSES,
   CONTENT_TYPE_LABELS,
@@ -19,6 +21,7 @@ export default function DraftDetailPage() {
   const id = params.id as string;
 
   const [post, setPost] = useState<Post | null>(null);
+  const [kits, setKits] = useState<Post[]>([]);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -53,9 +56,18 @@ export default function DraftDetailPage() {
       if (!session) { router.push("/login"); return; }
       try { hydrate(await api(`/api/posts/${id}`)); }
       catch (e) { setMsg(e instanceof Error ? e.message : "Load failed"); }
+      try { setKits((await api(`/api/posts/${id}/video-kit`)) ?? []); } catch { /* ignore */ }
       setReady(true);
     })();
   }, [id, router]);
+
+  const genVideoKit = async () => {
+    setBusy(true); setMsg(null);
+    try {
+      const kit = await api(`/api/posts/${id}/video-kit`, { method: "POST", body: JSON.stringify({ durationSeconds: 30 }) });
+      router.push(`/video-studio/${kit.id}`);
+    } catch (e) { setMsg(e instanceof Error ? e.message : "Video kit failed"); setBusy(false); }
+  };
 
   const save = async (extra: Record<string, unknown> = {}) => {
     setBusy(true); setMsg(null);
@@ -138,6 +150,34 @@ export default function DraftDetailPage() {
       <input style={field} value={cta} onChange={(e) => setCta(e.target.value)} />
       <label style={label}>Visual idea</label>
       <textarea style={field} rows={2} value={visualIdea} onChange={(e) => setVisualIdea(e.target.value)} />
+
+      {post.media_suggestion ? (
+        <div style={{ background: "#f0f7ff", border: "1px solid #cfe2ff", borderRadius: 6, padding: 10, marginBottom: 12, fontSize: 13 }}>
+          <strong>AI media suggestion</strong>
+          <div>Needed: {(post.media_suggestion as Record<string, unknown>).needed_type as string}</div>
+          {(post.media_suggestion as Record<string, unknown>).could_use_existing ? <div>Could reuse: {(post.media_suggestion as Record<string, unknown>).could_use_existing as string}</div> : null}
+          {(post.media_suggestion as Record<string, unknown>).suggested_thumbnail_text ? <div>Thumbnail text: “{(post.media_suggestion as Record<string, unknown>).suggested_thumbnail_text as string}”</div> : null}
+          {(post.media_suggestion as Record<string, unknown>).suggested_overlay_text ? <div>Overlay text: “{(post.media_suggestion as Record<string, unknown>).suggested_overlay_text as string}”</div> : null}
+        </div>
+      ) : null}
+
+      <MediaAttach postId={id} brandId={post.brand_id as string} />
+
+      <div style={{ border: "1px solid #ddd", borderRadius: 8, padding: 12, margin: "12px 0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <strong style={{ fontSize: 14 }}>Video production</strong>
+          <button onClick={genVideoKit} disabled={busy} style={{ background: "#0a7d36", color: "#fff", border: "none", borderRadius: 6, padding: "6px 12px" }}>
+            {busy ? "…" : "Generate video production kit"}
+          </button>
+        </div>
+        {kits.length > 0 && (
+          <ul style={{ margin: "8px 0 0", fontSize: 13 }}>
+            {kits.map((k) => (
+              <li key={k.id as string}><Link href={`/video-studio/${k.id}`}>{(k.title as string) || "Video kit"}</Link> · {k.duration_seconds as number}s</li>
+            ))}
+          </ul>
+        )}
+      </div>
 
       {isVideoType(ct) && post.video_script ? (
         <div style={{ marginBottom: 12 }}>

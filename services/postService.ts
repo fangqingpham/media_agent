@@ -156,6 +156,7 @@ function buildContentFields(parsed: Record<string, unknown>, contentType: Conten
     compliance_reason: reasonParts.join(" ") || null,
     human_approval_required: merged.humanApprovalRequired,
     claims_to_check: Array.from(claims),
+    media_suggestion: parsed.media_suggestion ?? null,
     raw_response: parsed,
   };
 }
