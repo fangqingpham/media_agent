@@ -45,6 +45,6 @@ export function commentMatchesKeyword(comment: string, keyword: string): boolean
   const k = normalizeKeyword(keyword);
   if (!k) return false;
   // tokens of letters/numbers in the comment, uppercased
-  const tokens = (comment.toUpperCase().match(/[A-Z0-9]+/g) ?? []);
+  const tokens: string[] = comment.toUpperCase().match(/[A-Z0-9]+/g) ?? [];
   return tokens.includes(k);
 }
