@@ -5,6 +5,7 @@ import { buildComplianceReviewMessages } from "@/prompts/complianceReview";
 import { scanCompliance, mergeRisk } from "@/lib/compliance";
 import { scanSensitive } from "@/lib/interactionCompliance";
 import type { RiskLevel } from "@/lib/contentTypes";
+import { logAudit } from "@/services/auditService";
 
 export class ComplianceError extends Error {
   status: number;
@@ -249,6 +250,14 @@ export async function decideReview(
   if (review.post_id && decision === "rejected") {
     await supabaseAdmin.from("post_drafts").update({ status: "rejected" }).eq("id", review.post_id);
   }
+  await logAudit({
+    ownerId: review.owner_id as string,
+    actor: userId,
+    action: decision === "approved" ? "post_approved" : `compliance_${decision}`,
+    entityType: "post",
+    entityId: (review.post_id as string) ?? null,
+    detail: note ?? null,
+  });
   return data;
 }
 

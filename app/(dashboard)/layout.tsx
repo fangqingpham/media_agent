@@ -26,6 +26,9 @@ const LINKS = [
   { href: "/weekly-report", label: "AI Report" },
   { href: "/publish-logs", label: "Publish Logs" },
   { href: "/settings/social-accounts", label: "Accounts" },
+  { href: "/settings/team", label: "Team" },
+  { href: "/automation-rules", label: "Automation" },
+  { href: "/automation-logs", label: "Auto Logs" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

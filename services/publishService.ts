@@ -3,6 +3,9 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { decryptToken } from "@/lib/tokenCrypto";
 import { publishToPage } from "@/lib/facebook";
 import { hasApprovedCompliance } from "@/services/complianceService";
+import { getEffectiveRole } from "@/services/teamService";
+import { hasPermission } from "@/lib/permissions";
+import { logAudit } from "@/services/auditService";
 
 export class PublishError extends Error {
   status: number;
@@ -97,6 +100,12 @@ export async function publishPostToFacebook(
   if (error || !post) throw new PublishError("Post not found", 404);
   if (post.owner_id !== userId) throw new PublishError("Forbidden", 403);
 
+  // Stage 13: caller must have publish permission in this workspace.
+  const role = await getEffectiveRole(userId, post.owner_id as string);
+  if (!role || !hasPermission(role, "publish_posts")) {
+    throw new PublishError("You don't have permission to publish posts.", 403);
+  }
+
   // ---- safety gates ----
   if (post.platform !== "facebook") {
     throw new PublishError("Stage 7A only publishes Facebook posts.", 400);
@@ -173,6 +182,8 @@ export async function publishPostToFacebook(
     post_id: postId, owner_id: userId, from_status: post.status, to_status: "posted",
     note: `Published to Facebook (${result.id})`, changed_by: userId,
   });
+
+  await logAudit({ ownerId: post.owner_id as string, actor: userId, action: "post_published", entityType: "post", entityId: postId, detail: publishedUrl });
 
   return { platform_post_id: result.id, published_url: publishedUrl };
 }
