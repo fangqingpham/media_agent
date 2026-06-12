@@ -113,8 +113,8 @@ export default function PrivacyPolicyPage() {
       <h2 style={h2}>Contact us</h2>
       <p style={p}>
         A-Z Housing Solutions<br />
-        Email: <strong>[your business contact email]</strong><br />
-        [your business mailing address, city, province, Canada]
+        Email: <strong>phamthuyphuongkhanh@gmail.com</strong><br />
+        Greater Toronto Area, Ontario, Canada
       </p>
     </main>
   );

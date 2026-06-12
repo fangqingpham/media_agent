@@ -36,7 +36,7 @@ export default function DataDeletionPage() {
       <h2 style={h2}>How to request deletion</h2>
       <p style={p}>Send us a request and we will delete the personal information we hold about you:</p>
       <ul>
-        <li style={li}>Email <strong>[your business contact email]</strong> with the subject line “Data Deletion Request”.</li>
+        <li style={li}>Email <strong>phamthuyphuongkhanh@gmail.com</strong> with the subject line “Data Deletion Request”.</li>
         <li style={li}>Tell us the name you used on Facebook (and, if you can, a link to the comment) so we can locate your information.</li>
       </ul>
       <p style={p}>
@@ -54,7 +54,7 @@ export default function DataDeletionPage() {
       <h2 style={h2}>Contact</h2>
       <p style={p}>
         A-Z Housing Solutions<br />
-        Email: <strong>[your business contact email]</strong>
+        Email: <strong>phamthuyphuongkhanh@gmail.com</strong>
       </p>
 
       <p style={{ ...p, marginTop: 20 }}>
