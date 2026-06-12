@@ -92,6 +92,74 @@ export async function publishToPage(
   return { id: json.id };
 }
 
+// ---- Publishing with media (needs pages_manage_posts) ----
+// Facebook fetches these image/video URLs server-side, so the URLs must be
+// PUBLICLY reachable (e.g. a public Supabase Storage URL or a stock URL).
+
+// Single photo post with caption. Returns the feed post id when available.
+export async function publishPhotoToPage(
+  pageId: string,
+  pageToken: string,
+  imageUrl: string,
+  caption: string
+): Promise<{ id: string }> {
+  const body = new URLSearchParams({ url: imageUrl, caption, access_token: pageToken });
+  const res = await fetch(`${base()}/${pageId}/photos`, { method: "POST", body });
+  const json = (await res.json()) as FbError & { id?: string; post_id?: string };
+  if (!res.ok || json.error || !(json.post_id || json.id)) {
+    throw new Error(json.error?.message || `Photo publish failed (${res.status})`);
+  }
+  return { id: (json.post_id || json.id) as string };
+}
+
+// Upload a photo WITHOUT publishing it (for multi-image posts). Returns photo id.
+export async function uploadUnpublishedPhoto(
+  pageId: string,
+  pageToken: string,
+  imageUrl: string
+): Promise<string> {
+  const body = new URLSearchParams({ url: imageUrl, published: "false", access_token: pageToken });
+  const res = await fetch(`${base()}/${pageId}/photos`, { method: "POST", body });
+  const json = (await res.json()) as FbError & { id?: string };
+  if (!res.ok || json.error || !json.id) {
+    throw new Error(json.error?.message || `Photo upload failed (${res.status})`);
+  }
+  return json.id as string;
+}
+
+// Multi-photo post: attach already-uploaded (unpublished) photo ids to a feed post.
+export async function publishMultiPhotoPost(
+  pageId: string,
+  pageToken: string,
+  message: string,
+  photoIds: string[]
+): Promise<{ id: string }> {
+  const body = new URLSearchParams({ message, access_token: pageToken });
+  photoIds.forEach((pid, i) => body.set(`attached_media[${i}]`, JSON.stringify({ media_fbid: pid })));
+  const res = await fetch(`${base()}/${pageId}/feed`, { method: "POST", body });
+  const json = (await res.json()) as FbError & { id?: string };
+  if (!res.ok || json.error || !json.id) {
+    throw new Error(json.error?.message || `Multi-photo publish failed (${res.status})`);
+  }
+  return { id: json.id };
+}
+
+// Video post from a hosted URL. Facebook fetches the file_url server-side.
+export async function publishVideoToPage(
+  pageId: string,
+  pageToken: string,
+  videoUrl: string,
+  description: string
+): Promise<{ id: string }> {
+  const body = new URLSearchParams({ file_url: videoUrl, description, access_token: pageToken });
+  const res = await fetch(`${base()}/${pageId}/videos`, { method: "POST", body });
+  const json = (await res.json()) as FbError & { id?: string };
+  if (!res.ok || json.error || !json.id) {
+    throw new Error(json.error?.message || `Video publish failed (${res.status})`);
+  }
+  return { id: json.id };
+}
+
 // ---- Stage 12: reading Page posts + comments (needs pages_read_engagement) ----
 
 export type FbPagePost = { id: string; message?: string; permalink_url?: string; created_time?: string };

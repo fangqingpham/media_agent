@@ -1,7 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { decryptToken } from "@/lib/tokenCrypto";
-import { publishToPage } from "@/lib/facebook";
+import { publishToPage, publishPhotoToPage, uploadUnpublishedPhoto, publishMultiPhotoPost, publishVideoToPage } from "@/lib/facebook";
 import { hasApprovedCompliance } from "@/services/complianceService";
 import { getEffectiveRole } from "@/services/teamService";
 import { hasPermission } from "@/lib/permissions";
@@ -144,15 +144,51 @@ export async function publishPostToFacebook(
 
   const { account, pageToken } = await getFacebookAccount(userId, post.brand_id);
 
-  // assemble caption + hashtags + optional link
+  // assemble caption + hashtags
   const hashtags = ((post.hashtags as string[]) ?? [])
     .map((h) => (h.startsWith("#") ? h : `#${h}`))
     .join(" ");
   const message = [caption, hashtags].filter(Boolean).join("\n\n");
 
+  // Stage 9 media: if image(s)/video are attached, publish them (not just text).
+  // Facebook fetches these URLs server-side, so they must be publicly reachable
+  // (a public Supabase Storage URL or a stock URL). Canva/CapCut *edit links* are
+  // not direct media and are skipped — those posts fall back to text.
+  const { data: mediaLinks } = await supabaseAdmin
+    .from("post_media_assets")
+    .select("media_id")
+    .eq("post_id", postId);
+  const mediaIds = (mediaLinks ?? []).map((l) => l.media_id) as string[];
+  const images: string[] = [];
+  const videos: string[] = [];
+  if (mediaIds.length) {
+    const { data: assets } = await supabaseAdmin
+      .from("media_assets")
+      .select("asset_type, file_url")
+      .in("id", mediaIds);
+    for (const a of assets ?? []) {
+      if (!a.file_url) continue; // edit-link-only assets have no direct URL to publish
+      if (a.asset_type === "image") images.push(a.file_url as string);
+      else if (a.asset_type === "video") videos.push(a.file_url as string);
+    }
+  }
+
+  const pageId = account.account_id as string;
   let result: { id: string };
   try {
-    result = await publishToPage(account.account_id as string, pageToken, message);
+    if (videos.length >= 1) {
+      // video post (first attached video; multiple videos not supported in one post)
+      result = await publishVideoToPage(pageId, pageToken, videos[0], message);
+    } else if (images.length === 1) {
+      result = await publishPhotoToPage(pageId, pageToken, images[0], message);
+    } else if (images.length > 1) {
+      const photoIds: string[] = [];
+      for (const url of images) photoIds.push(await uploadUnpublishedPhoto(pageId, pageToken, url));
+      result = await publishMultiPhotoPost(pageId, pageToken, message, photoIds);
+    } else {
+      // no publishable media → text post
+      result = await publishToPage(pageId, pageToken, message);
+    }
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Publish failed";
     await recordAttempt(userId, { postId, accountId: account.id, status: "failed", error: msg, finalCaption: message, trigger: opts.trigger });
