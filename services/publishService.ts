@@ -126,7 +126,9 @@ export async function publishPostToFacebook(
       );
     }
   }
-  const caption = (post.platform_caption as string) || (post.caption as string) || "";
+  // Publish the full educational caption by default; fall back to the short
+  // platform caption only if the full one is empty.
+  const caption = (post.caption as string) || (post.platform_caption as string) || "";
   if (!caption.trim()) {
     throw new PublishError("Post has no caption to publish.", 400);
   }

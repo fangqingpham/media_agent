@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { api } from "@/lib/api";
 import MediaAttach from "@/components/MediaAttach";
+import { CopyButton } from "@/components/badges";
 import {
   POST_STATUSES,
   CONTENT_TYPE_LABELS,
@@ -148,8 +149,14 @@ export default function DraftDetailPage() {
       <input style={field} value={hashtags} onChange={(e) => setHashtags(e.target.value)} />
       <label style={label}>CTA</label>
       <input style={field} value={cta} onChange={(e) => setCta(e.target.value)} />
-      <label style={label}>Visual idea</label>
-      <textarea style={field} rows={2} value={visualIdea} onChange={(e) => setVisualIdea(e.target.value)} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <span style={{ fontWeight: 600, fontSize: 14 }}>AI image prompt</span>
+        <CopyButton text={visualIdea} label="Copy" />
+      </div>
+      <textarea style={field} rows={3} value={visualIdea} onChange={(e) => setVisualIdea(e.target.value)} />
+      <p style={{ fontSize: 12, color: "#6b7280", marginTop: -8, marginBottom: 12 }}>
+        Paste this into any AI image generator (Midjourney, DALL·E, Ideogram…) to create a matching photo.
+      </p>
 
       {post.media_suggestion ? (
         <div style={{ background: "#f0f7ff", border: "1px solid #cfe2ff", borderRadius: 6, padding: 10, marginBottom: 12, fontSize: 13 }}>

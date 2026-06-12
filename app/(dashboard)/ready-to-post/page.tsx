@@ -57,7 +57,7 @@ export default function ReadyToPostPage() {
     try {
       await api(`/api/posts/${id}/manual-log`, {
         method: "POST",
-        body: JSON.stringify({ scheduledAt: form.scheduledAt || null, notes: form.notes || null, finalCaption: post.platform_caption }),
+        body: JSON.stringify({ scheduledAt: form.scheduledAt || null, notes: form.notes || null, finalCaption: (post.caption as string) || (post.platform_caption as string) }),
       });
       await api(`/api/posts/${id}/status`, { method: "POST", body: JSON.stringify({ toStatus: "scheduled_manually", note: "Scheduled manually" }) });
       if (brandId) await load(brandId);
@@ -80,7 +80,7 @@ export default function ReadyToPostPage() {
           postedAt: form.postedAt || new Date().toISOString(),
           postUrl: form.postUrl || null,
           notes: form.notes || null,
-          finalCaption: post.platform_caption,
+          finalCaption: (post.caption as string) || (post.platform_caption as string),
         }),
       });
       await api(`/api/posts/${id}/status`, { method: "POST", body: JSON.stringify({ toStatus: "posted", note: "Marked posted" }) });
@@ -125,7 +125,9 @@ export default function ReadyToPostPage() {
           const id = post.id as string;
           const st = post.status as string;
           const hashtags = ((post.hashtags as string[]) ?? []).map((h) => (h.startsWith("#") ? h : `#${h}`)).join(" ");
-          const full = [post.platform_caption, hashtags].filter(Boolean).join("\n\n");
+          // Prefer the full educational caption (matches what the publisher sends).
+          const pubCaption = (post.caption as string) || (post.platform_caption as string) || "";
+          const full = [pubCaption, hashtags].filter(Boolean).join("\n\n");
           const form = formFor(id);
           return (
             <article key={id} style={{ border: "1px solid #ddd", borderRadius: 8, padding: 14 }}>
@@ -137,7 +139,7 @@ export default function ReadyToPostPage() {
                 {post.platform as string} · {CONTENT_TYPE_LABELS[post.content_type as ContentType] ?? (post.content_type as string)}
               </div>
 
-              {post.platform_caption ? <p style={{ whiteSpace: "pre-wrap" }}>{post.platform_caption as string}</p> : null}
+              {pubCaption ? <p style={{ whiteSpace: "pre-wrap" }}>{pubCaption}</p> : null}
               {hashtags ? <p style={{ color: "#0a58ca" }}>{hashtags}</p> : null}
               {post.visual_idea ? <p style={{ fontSize: 13 }}><strong>Visual:</strong> {post.visual_idea as string}</p> : null}
               {isVideoType(post.content_type as string) && post.video_script ? (
@@ -145,7 +147,7 @@ export default function ReadyToPostPage() {
               ) : null}
 
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0" }}>
-                <CopyButton text={(post.platform_caption as string) || ""} label="Copy caption" />
+                <CopyButton text={pubCaption} label="Copy caption" />
                 <CopyButton text={hashtags} label="Copy hashtags" />
                 <CopyButton text={full} label="Copy full post" />
                 {post.platform === "facebook" && (

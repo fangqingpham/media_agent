@@ -49,35 +49,53 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div style={{ fontFamily: "system-ui" }}>
+    <div>
       <nav
         style={{
           display: "flex",
-          gap: 16,
-          alignItems: "center",
-          padding: "12px 24px",
-          borderBottom: "1px solid #eee",
           flexWrap: "wrap",
+          alignItems: "center",
+          gap: 6,
+          padding: "10px 20px",
+          background: "#ffffff",
+          borderBottom: "1px solid #e3e7ec",
+          boxShadow: "0 1px 2px rgba(16,24,40,0.06)",
         }}
       >
-        <strong style={{ marginRight: 8 }}>Media Agent</strong>
-        {LINKS.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            style={{
-              textDecoration: "none",
-              color: pathname?.startsWith(l.href) ? "#0070f3" : "#444",
-              fontWeight: pathname?.startsWith(l.href) ? 600 : 400,
-            }}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 7, fontWeight: 750, fontSize: 16, color: "#0070f3", marginRight: 14 }}>
+          <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#0070f3", boxShadow: "0 0 0 3px rgba(0,112,243,0.15)" }} />
+          Media Agent
+        </span>
+        {LINKS.map((l) => {
+          const active = pathname?.startsWith(l.href);
+          return (
+            <Link
+              key={l.href}
+              href={l.href}
+              style={{
+                textDecoration: "none",
+                fontSize: 13,
+                fontWeight: active ? 650 : 500,
+                color: active ? "#0070f3" : "#5b6573",
+                background: active ? "rgba(0,112,243,0.10)" : "transparent",
+                padding: "5px 10px",
+                borderRadius: 6,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {l.label}
+            </Link>
+          );
+        })}
+        <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 10, color: "#6b7280", fontSize: 13 }}>
+          {email}
+          <button
+            onClick={signOut}
+            style={{ padding: "5px 12px", fontSize: 13, borderRadius: 6, border: "1px solid #cfd6de", background: "#fff", color: "#1f2533", cursor: "pointer" }}
           >
-            {l.label}
-          </Link>
-        ))}
-        <span style={{ marginLeft: "auto", color: "#888", fontSize: 13 }}>{email}</span>
-        <button onClick={signOut} style={{ fontSize: 13 }}>
-          Sign out
-        </button>
+            Sign out
+          </button>
+        </span>
       </nav>
       <div>{children}</div>
     </div>

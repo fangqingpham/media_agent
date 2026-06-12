@@ -15,12 +15,15 @@ export class ComplianceError extends Error {
   }
 }
 
-// Build the reviewable text from a post's fields.
+// Build the reviewable text from a post's fields. Includes BOTH the full caption
+// and the short platform caption so that whichever one is published has been
+// scanned (the publisher prefers the full caption).
 function postText(post: Record<string, unknown>): string {
   return [
     post.title,
     post.hook,
-    (post.platform_caption as string) || (post.caption as string),
+    post.caption as string,
+    post.platform_caption as string,
     post.cta,
     Array.isArray(post.hashtags) ? (post.hashtags as string[]).join(" ") : "",
   ]
