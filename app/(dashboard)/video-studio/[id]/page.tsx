@@ -98,6 +98,21 @@ export default function VideoKitDetailPage() {
   const label = { display: "block", fontSize: 13, color: "#444", marginTop: 10, marginBottom: 2 } as const;
   const list = (arr: unknown) => (Array.isArray(arr) ? (arr as string[]) : []);
 
+  // Google Vids fields live in the saved raw_response (no DB migration needed).
+  const vids = ((kit.raw_response as Row) || {}) as Row;
+  const vchars = Array.isArray(vids.characters) ? (vids.characters as Row[]) : [];
+  const vscenes = Array.isArray(vids.scenes) ? (vids.scenes as Row[]) : [];
+  const hasVids = vscenes.some((s) => s.image_prompt || s.motion_prompt);
+  const charSheet = [
+    vids.art_style ? `STYLE: ${vids.art_style as string}` : "",
+    ...vchars.map((c) => `${c.name as string}: ${c.description as string}`),
+  ].filter(Boolean).join("\n\n");
+  const speechSecs = (t: unknown) => {
+    const s = typeof t === "string" ? t.trim() : "";
+    const w = s ? s.split(/\s+/).length : 0;
+    return Math.round((w / 2.5) * 10) / 10;
+  };
+
   return (
     <main style={{ maxWidth: 860, margin: "32px auto", padding: "0 16px" }}>
       <Link href="/video-studio" style={{ fontSize: 13, color: "#0070f3" }}>← Video studio</Link>
@@ -117,7 +132,80 @@ export default function VideoKitDetailPage() {
 
       {msg && <p style={{ background: msg === "Saved." || msg.includes("Attached") ? "#e6f7ed" : "#fdeaea", padding: 10, borderRadius: 6 }}>{msg}</p>}
 
-      {/* scenes / shot list */}
+      {/* Google Vids production (paste-ready) */}
+      {hasVids && (
+        <div style={{ ...box, border: "2px solid #0070f3" }}>
+          <h2 style={{ fontSize: 16, marginTop: 0 }}>🎬 Google Vids production (paste-ready)</h2>
+          {vids.vids_setup ? <p style={{ fontSize: 13, color: "#444", marginTop: 0 }}>{vids.vids_setup as string}</p> : null}
+
+          {(vchars.length > 0 || vids.art_style) && (
+            <div style={{ background: "#f6f8fb", border: "1px solid #e3e7ec", borderRadius: 6, padding: 10, marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <strong style={{ fontSize: 14 }}>Character &amp; style sheet</strong>
+                <CopyButton text={charSheet} label="Copy sheet" />
+              </div>
+              {vids.art_style ? <div style={{ fontSize: 13, marginBottom: 4 }}><em>Style:</em> {vids.art_style as string}</div> : null}
+              {vchars.map((c, i) => (
+                <div key={i} style={{ fontSize: 13, marginBottom: 4 }}><strong>{c.name as string}:</strong> {c.description as string}</div>
+              ))}
+              <p style={{ fontSize: 12, color: "#6b7280", margin: "6px 0 0" }}>Generate one reference image per clip below, then use “Animate an image” in Google Vids (Portrait 9:16).</p>
+            </div>
+          )}
+
+          <div style={{ display: "grid", gap: 10 }}>
+            {vscenes.map((s, i) => {
+              const reuse = Number(s.reuse_image_from_scene) || 0;
+              const secs = speechSecs(s.dialogue);
+              return (
+                <div key={i} style={{ border: "1px solid #e3e7ec", borderRadius: 6, padding: 10 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
+                    <strong style={{ fontSize: 13 }}>Clip {s.scene_number as number}{s.timestamp ? ` · ${s.timestamp as string}` : ""}</strong>
+                    {Array.isArray(s.characters_in_shot) && (s.characters_in_shot as string[]).length > 0
+                      ? <span style={{ fontSize: 12, color: "#6b7280" }}>In shot: {(s.characters_in_shot as string[]).join(", ")}</span>
+                      : <span style={{ fontSize: 12, color: "#6b7280" }}>Establishing shot</span>}
+                  </div>
+
+                  {reuse > 0 ? (
+                    <div style={{ fontSize: 13, background: "#fff8e6", border: "1px solid #f0e0a8", borderRadius: 6, padding: 8, marginTop: 8 }}>
+                      ↻ Reuse the image you generated for <strong>Clip {reuse}</strong> — don’t regenerate (keeps the characters identical).
+                    </div>
+                  ) : s.image_prompt ? (
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600 }}>1) Image prompt</span>
+                        <CopyButton text={s.image_prompt as string} label="Copy" />
+                      </div>
+                      <div style={{ fontSize: 13, whiteSpace: "pre-wrap", background: "#fafbfc", border: "1px solid #eee", borderRadius: 6, padding: 8 }}>{s.image_prompt as string}</div>
+                    </div>
+                  ) : null}
+
+                  {s.motion_prompt ? (
+                    <div style={{ marginTop: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                        <span style={{ fontSize: 12, fontWeight: 600 }}>2) Motion prompt (Animate an image)</span>
+                        <CopyButton text={s.motion_prompt as string} label="Copy" />
+                      </div>
+                      <div style={{ fontSize: 13, whiteSpace: "pre-wrap", background: "#fafbfc", border: "1px solid #eee", borderRadius: 6, padding: 8 }}>{s.motion_prompt as string}</div>
+                    </div>
+                  ) : null}
+
+                  {s.dialogue ? (
+                    <div style={{ fontSize: 13, marginTop: 8 }}>
+                      <em>Dialogue:</em> “{s.dialogue as string}”{" "}
+                      <span style={{ color: secs > 8 ? "#c0271a" : "#0a7d36", fontWeight: 600 }}>≈{secs}s{secs > 8 ? " / 8s ⚠ too long — trim" : " / 8s"}</span>
+                    </div>
+                  ) : null}
+
+                  {s.on_screen ? <div style={{ fontSize: 13, marginTop: 6 }}><em>On-screen text:</em> {s.on_screen as string}</div> : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* scenes / shot list (legacy kits only; new kits use the Google Vids section above) */}
+      {!hasVids && (
       <div style={box}>
         <h2 style={{ fontSize: 16, marginTop: 0 }}>Scene-by-scene shot list</h2>
         {scenes.length === 0 ? <p style={{ color: "#666" }}>No scenes.</p> : (
@@ -133,6 +221,7 @@ export default function VideoKitDetailPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* lists */}
       <div style={box}>

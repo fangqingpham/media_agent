@@ -65,10 +65,16 @@ async function loadBrandContext(brandId: string, userId: string, pillarId?: stri
 }
 
 function deriveCompliance(parsed: Record<string, unknown>) {
+  const sceneText = Array.isArray(parsed.scenes)
+    ? (parsed.scenes as Record<string, unknown>[])
+        .map((s) => [s.dialogue, s.on_screen, s.motion_prompt].filter(Boolean).join(" "))
+        .join(" ")
+    : "";
   const text = [
     parsed.hook,
     parsed.voiceover,
     Array.isArray(parsed.on_screen_text) ? (parsed.on_screen_text as string[]).join(" ") : "",
+    sceneText,
     parsed.caption,
     parsed.cta,
   ]
@@ -142,7 +148,7 @@ async function saveKit(
       scene_number: Number(s.scene_number) || i + 1,
       timestamp_label: (s.timestamp as string) ?? null,
       shot_description: (s.shot_description as string) ?? null,
-      voiceover: (s.voiceover as string) ?? null,
+      voiceover: (s.voiceover as string) ?? (s.dialogue as string) ?? null,
       on_screen: (s.on_screen as string) ?? null,
     }));
     await supabaseAdmin.from("video_scenes").insert(rows);
