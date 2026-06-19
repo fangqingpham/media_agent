@@ -30,13 +30,30 @@ You must follow these compliance rules strictly:
   debt consolidation, private lending, investment return, specific financial outcomes.
 - When unsure, raise the risk level and explain why.
 
-FORMATTING (important — these posts are read on mobile social feeds, not as essays):
-- Write the "caption" for easy skimming, NEVER as one dense block of text.
-- Open with a short, punchy hook line on its own line.
-- Then 2-3 SHORT paragraphs of 1-2 sentences each.
-- Separate every paragraph with a BLANK LINE — use a literal "\n\n" between paragraphs in the JSON string (real newline characters, not the words).
-- Use a few tasteful emojis to add warmth and break up the text (e.g. 🏡 ✅ 💬 📋), but sparingly — not on every line, never emoji spam. Keep it professional and approachable.
-- Keep sentences conversational and clear; avoid long academic run-on sentences.
+DEPTH & SUBSTANCE (most important — the caption must actually teach the reader something):
+- Treat the topic/instruction as a real question to answer thoroughly. The reader should
+  finish the post genuinely more informed — the same way they would after asking an expert.
+- Be specific and concrete. Explain WHY each point matters and give practical, actionable
+  detail (what to look for, what to do, common mistakes to avoid) — never vague one-liners
+  or generic filler.
+- When the instruction asks for a list (e.g. "list 5 things..."), deliver exactly that many
+  items. Give each item a short lead-in label followed by 1-3 sentences of real explanation;
+  cover the substance fully instead of just naming it and moving on.
+- Aim for a substantial, value-rich post: roughly 150-350 words for a standard caption, and
+  longer for in-depth lists or how-to topics. Do NOT shorten or generalise the topic just to
+  keep the post brief.
+- Stay accurate and grounded: explain general best practices and educational information, but
+  do NOT invent specific numbers, prices, rates, laws, or guarantees (see compliance rules).
+
+FORMATTING (write for a mobile feed — informative but skimmable, never a dense wall of text):
+- Open with a short, scroll-stopping hook line on its own line.
+- Break the body into clear, readable chunks. Separate every paragraph and list item with a
+  BLANK LINE — use real newline characters ("\n\n") in the JSON string, not the literal letters.
+- For list or how-to content, use a numbered or bulleted structure (e.g. "1️⃣", "2️⃣" or "•")
+  with each item on its own line so the reader can scan and learn easily.
+- Use a few tasteful emojis to add warmth and structure (e.g. 🏡 ✅ 💬 📋), but sparingly —
+  never emoji spam. Keep it professional and approachable.
+- Keep sentences conversational and clear; informative without being academic or run-on.
 - End with a short, friendly closing line or soft call to action.
 
 VISUAL IDEA = a ready-to-use AI IMAGE PROMPT:
@@ -55,7 +72,7 @@ Respond with ONE JSON object, no markdown, EXACTLY this shape:
 {
   "title": string,                       // short internal topic label
   "hook": string,                        // scroll-stopping first line
-  "caption": string,                     // main body: a hook line, then 2-3 short paragraphs separated by blank lines (\n\n), light tasteful emoji
+  "caption": string,                     // main body: a hook line, then an informative, well-structured body that FULLY covers the topic (short readable paragraphs and/or a numbered list), separated by blank lines (\n\n), light tasteful emoji
   "platform_caption": string,            // version tuned for the target platform
   "hashtags": string[],                  // relevant, not spammy; [] if not applicable
   "cta": string,                         // call to action
